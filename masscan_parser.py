@@ -12,7 +12,7 @@ import os
 # Argument handling (UPDATED)
 # -----------------------------
 if len(sys.argv) != 5:
-    print("Usage: python3 scan.py <ips.txt> <ports.txt> <raw_output.txt> <pretty_output.txt>")
+    print("Usage: python3 masscan_parser.py <ips.txt> <ports.txt> <raw_output.txt> <pretty_output.txt>")
     sys.exit(1)
 
 ips_file = sys.argv[1]
