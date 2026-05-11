@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # To run:
-# sudo python3 scan.py ips.txt ports.txt raw.txt pretty.txt
+# sudo python3 masscan_parser.py ips.txt ports.txt raw.txt pretty.txt
 
 import subprocess
 import sys
@@ -62,21 +62,42 @@ def host_total_score(port_list):
     return sum(severity_score[get_severity(p)] for p in port_list)
 
 # -----------------------------
-# Load ports file
+# Load and compact ports file
 # -----------------------------
 with open(ports_file) as f:
-    raw_ports = f.read().strip()
+    raw_ports = f.read().replace(',', '\n').splitlines()
 
-if "," in raw_ports:
-    ports = raw_ports
-else:
-    ports = ",".join(
-        line.strip() for line in raw_ports.splitlines() if line.strip()
-    )
+# Extract valid integers, sort them, and remove duplicates
+port_nums = sorted(set(int(p.strip()) for p in raw_ports if p.strip().isdigit()))
 
-if not ports:
+if not port_nums:
     print("[-] No valid ports found.")
     sys.exit(1)
+
+# Compact into ranges (e.g., [1, 2, 3, 5, 8, 9] -> "1-3,5,8-9")
+ranges = []
+start = port_nums[0]
+end = port_nums[0]
+
+for p in port_nums[1:]:
+    if p == end + 1:
+        end = p
+    else:
+        if start == end:
+            ranges.append(str(start))
+        else:
+            ranges.append(f"{start}-{end}")
+        start = p
+        end = p
+
+# Append the last range/port
+if start == end:
+    ranges.append(str(start))
+else:
+    ranges.append(f"{start}-{end}")
+
+ports = ",".join(ranges)
+print(f"[*] Compressed port list length: {len(ports)} characters")
 
 # -----------------------------
 # Run masscan
